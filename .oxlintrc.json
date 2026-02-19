@@ -1,0 +1,36 @@
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "plugins": [],
+  "categories": {},
+  "rules": {
+    "eslint/curly": "error",
+    "eslint/sort-keys": "error",
+    "eslint/no-implicit-coercion": "error",
+    "eslint/no-nested-ternary": "error",
+    "eslint/prefer-const": "error",
+    "eslint/sort-imports": "error",
+
+    "promise/no-nesting": "error",
+    "promise/param-names": "error",
+
+    "unicorn/no-nested-ternary": "error",
+    "unicorn/no-null": "error",
+    "unicorn/no-useless-collection-argument": "error",
+    "unicorn/prefer-array-index-of": "error",
+    "unicorn/prefer-class-fields": "error",
+    "unicorn/throw-new-error": "error",
+    "unicorn/switch-case-braces": "error",
+    "unicorn/prefer-keyboard-event-key": "error",
+    "unicorn/filename-case": [
+      "error",
+      {
+        "case": "kebabCase"
+      }
+    ]
+  },
+  "env": {
+    "builtin": true
+  },
+  "globals": {},
+  "ignorePatterns": []
+}
