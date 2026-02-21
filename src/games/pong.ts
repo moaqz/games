@@ -1,0 +1,242 @@
+import { Game } from "../core/game";
+
+export class PongGame extends Game {
+  private static SCREEN_WIDTH = 600;
+  private static SCREEN_HEIGHT = 600;
+  private static SCREEN_BORDER = 20;
+
+  private BACKGROUND_COLOR = "#000";
+  private BORDER_COLOR = "#ccc";
+
+  private static BLOCK_WIDTH = 15;
+  private static BLOCK_HEIGHT = 15;
+  private static BLOCK_GAP = 15;
+  private BLOCK_COLOR = "#ccc";
+
+  private static PADDLE_WIDTH = 15;
+  private static PADDLE_HEIGHT = 80;
+  private static PADDLE_GAP = 20;
+  private PADDLE_COLOR = "#ccc";
+  private PADDLE_SPEED = 10;
+
+  private static BALL_WIDTH = 15;
+  private static BALL_HEIGHT = 15;
+  private BALL_COLOR = "#ccc";
+  private BALL_SPEED_X = 4;
+  private BALL_SPEED_Y = 3;
+
+  private state = {
+    ai: {
+      score: 0,
+      x: PongGame.SCREEN_WIDTH - PongGame.PADDLE_GAP - PongGame.PADDLE_WIDTH,
+      y: PongGame.SCREEN_HEIGHT / 2 - PongGame.PADDLE_HEIGHT / 2,
+    },
+    ball: {
+      vx: 0,
+      vy: 0,
+      x: 0,
+      y: 0,
+    },
+    hasWinner: false,
+    player: {
+      movingDown: false,
+      movingUp: false,
+      score: 0,
+      x: PongGame.PADDLE_GAP,
+      y: PongGame.SCREEN_HEIGHT / 2 - PongGame.PADDLE_HEIGHT / 2,
+    },
+    round: 0,
+    waitingLaunch: true,
+  };
+
+  private keys: Record<string, boolean> = {};
+
+  constructor(selector: string) {
+    super(selector);
+
+    this.canvas.width = PongGame.SCREEN_WIDTH;
+    this.canvas.height = PongGame.SCREEN_HEIGHT;
+
+    document.addEventListener("keydown", this.handleKeyDown);
+    document.addEventListener("keyup", this.handleKeyUp);
+  }
+
+  protected processInput() {
+    this.state.player.movingUp = Boolean(this.keys["ArrowUp"]);
+    this.state.player.movingDown = Boolean(this.keys["ArrowDown"]);
+  }
+
+  protected destroy() {
+    document.removeEventListener("keydown", this.handleKeyDown);
+    document.removeEventListener("keydown", this.handleKeyUp);
+  }
+
+  protected update() {
+    if (this.hasWinner()) {
+      this.resetGame();
+      return;
+    }
+
+    if (this.state.waitingLaunch) {
+      const isPlayerMoving = this.state.player.movingUp || this.state.player.movingDown;
+      if (isPlayerMoving) {
+        this.startRound();
+      }
+
+      return;
+    }
+
+    let newPlayerPosition = this.state.player.y;
+
+    if (this.state.player.movingUp) {
+      newPlayerPosition -= this.PADDLE_SPEED;
+    } else if (this.state.player.movingDown) {
+      newPlayerPosition += this.PADDLE_SPEED;
+    }
+
+    if (this.canMoveVertically(newPlayerPosition)) {
+      this.state.player.y = newPlayerPosition;
+    }
+
+    this.state.ball.x += this.state.ball.vx;
+    this.state.ball.y += this.state.ball.vy;
+    this.checkBallBounds();
+  }
+
+  protected render() {
+    this.drawBackground();
+    this.drawScore();
+    this.drawPaddles();
+
+    if (!this.state.waitingLaunch) {
+      this.drawBall();
+    }
+  }
+
+  private drawBackground() {
+    this.ctx.fillStyle = this.BACKGROUND_COLOR;
+    this.ctx.fillRect(0, 0, PongGame.SCREEN_WIDTH, PongGame.SCREEN_HEIGHT);
+
+    this.ctx.fillStyle = this.BORDER_COLOR;
+    this.ctx.fillRect(0, 0, PongGame.SCREEN_WIDTH, PongGame.SCREEN_BORDER);
+    this.ctx.fillRect(
+      0,
+      PongGame.SCREEN_HEIGHT - PongGame.SCREEN_BORDER,
+      PongGame.SCREEN_WIDTH,
+      PongGame.SCREEN_BORDER,
+    );
+
+    const blockWidth = PongGame.BLOCK_WIDTH;
+    const blockHeight = PongGame.BLOCK_HEIGHT;
+    const gap = PongGame.BLOCK_GAP;
+    const blockX = PongGame.SCREEN_WIDTH / 2 - blockWidth / 2;
+
+    this.ctx.fillStyle = this.BLOCK_COLOR;
+    for (let y = 0; y < PongGame.SCREEN_HEIGHT; y += blockHeight + gap) {
+      this.ctx.fillRect(blockX, y, blockWidth, blockHeight);
+    }
+  }
+
+  private drawPaddles() {
+    this.ctx.fillStyle = this.PADDLE_COLOR;
+
+    this.ctx.fillRect(
+      this.state.player.x,
+      this.state.player.y,
+      PongGame.PADDLE_WIDTH,
+      PongGame.PADDLE_HEIGHT,
+    );
+
+    this.ctx.fillRect(
+      this.state.ai.x,
+      this.state.ai.y,
+      PongGame.PADDLE_WIDTH,
+      PongGame.PADDLE_HEIGHT,
+    );
+  }
+
+  private drawScore() {
+    const posX = PongGame.SCREEN_WIDTH / 2;
+
+    this.ctx.font = "48px serif";
+    this.ctx.textAlign = "center";
+
+    this.ctx.fillText(`${this.state.player.score}`, posX - 80, PongGame.SCREEN_BORDER * 4);
+    this.ctx.fillText(`${this.state.ai.score}`, posX + 80, PongGame.SCREEN_BORDER * 4);
+  }
+
+  private drawBall() {
+    this.ctx.fillStyle = this.BALL_COLOR;
+    this.ctx.fillRect(
+      this.state.ball.x,
+      this.state.ball.y,
+      PongGame.BALL_WIDTH,
+      PongGame.BALL_HEIGHT,
+    );
+  }
+
+  private handleKeyDown = (event: KeyboardEvent) => {
+    this.keys[event.key] = true;
+  };
+
+  private handleKeyUp = (event: KeyboardEvent) => {
+    this.keys[event.key] = false;
+  };
+
+  private canMoveVertically(pos: number) {
+    return (
+      pos >= PongGame.SCREEN_BORDER &&
+      pos + PongGame.PADDLE_HEIGHT <= PongGame.SCREEN_HEIGHT - PongGame.SCREEN_BORDER
+    );
+  }
+
+  private checkBallBounds() {
+    if (this.state.ball.y <= PongGame.SCREEN_BORDER) {
+      this.state.ball.y = PongGame.SCREEN_BORDER;
+      this.state.ball.vy = -this.state.ball.vy;
+    }
+
+    if (
+      this.state.ball.y + PongGame.BALL_HEIGHT >=
+      PongGame.SCREEN_HEIGHT - PongGame.SCREEN_BORDER
+    ) {
+      this.state.ball.y = PongGame.SCREEN_HEIGHT - PongGame.SCREEN_BORDER - PongGame.BALL_HEIGHT;
+      this.state.ball.vy = -this.state.ball.vy;
+    }
+
+    if (this.state.ball.x >= PongGame.SCREEN_WIDTH) {
+      this.state.player.score++;
+      this.resetGame();
+    }
+
+    if (this.state.ball.x <= 0) {
+      this.state.ai.score++;
+      this.resetGame();
+    }
+  }
+
+  private initBall() {
+    this.state.ball.x = PongGame.SCREEN_WIDTH / 2 - PongGame.BALL_WIDTH / 2;
+
+    const initialY = Math.floor(Math.random() * PongGame.SCREEN_HEIGHT);
+    this.state.ball.y = initialY + PongGame.SCREEN_BORDER * 4;
+
+    this.state.ball.vx = this.BALL_SPEED_X * (Math.random() > 0.5 ? 1 : -1);
+    this.state.ball.vy = this.BALL_SPEED_Y * (Math.random() > 0.5 ? 1 : -1);
+  }
+
+  private startRound() {
+    this.initBall();
+    this.state.round++;
+    this.state.waitingLaunch = false;
+  }
+
+  private resetGame() {
+    this.initBall();
+    this.state.waitingLaunch = true;
+  }
+
+  private hasWinner() {
+    return this.state.player.score >= 10 || this.state.ai.score >= 10;
+  }
+}
