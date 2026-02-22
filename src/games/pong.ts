@@ -282,8 +282,9 @@ export class PongGame extends Game {
   private initBall() {
     this.state.ball.x = PongGame.SCREEN_WIDTH / 2 - PongGame.BALL_WIDTH / 2;
 
-    const initialY = Math.floor(Math.random() * PongGame.SCREEN_HEIGHT);
-    this.state.ball.y = initialY + PongGame.SCREEN_BORDER * 4;
+    const range = PongGame.SCREEN_HEIGHT / 8;
+    const initialY = Math.floor(Math.random() * range * 2) - range;
+    this.state.ball.y = PongGame.SCREEN_HEIGHT / 2 + initialY;
 
     this.state.ball.vx = this.BALL_SPEED_X * (Math.random() > 0.5 ? 1 : -1);
     this.state.ball.vy = this.BALL_SPEED_Y * (Math.random() > 0.5 ? 1 : -1);
