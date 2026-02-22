@@ -22,8 +22,10 @@ export class PongGame extends Game {
   private static BALL_WIDTH = 15;
   private static BALL_HEIGHT = 15;
   private BALL_COLOR = "#ccc";
-  private BALL_SPEED_X = 4;
-  private BALL_SPEED_Y = 3;
+  private BALL_SPEED_X = 6;
+  private BALL_SPEED_Y = 4;
+
+  private AI_SPEED = 3;
 
   private state = {
     ai: {
@@ -100,7 +102,11 @@ export class PongGame extends Game {
 
     this.state.ball.x += this.state.ball.vx;
     this.state.ball.y += this.state.ball.vy;
+
+    this.updateAIPosition();
     this.checkBallBounds();
+    this.checkPlayerPaddleCollision();
+    this.checkAIPaddleCollision();
   }
 
   protected render() {
@@ -212,6 +218,64 @@ export class PongGame extends Game {
     if (this.state.ball.x <= 0) {
       this.state.ai.score++;
       this.resetGame();
+    }
+  }
+
+  private checkPlayerPaddleCollision() {
+    if (
+      this.state.ball.x + PongGame.BALL_WIDTH >= this.state.player.x &&
+      this.state.ball.x <= this.state.player.x + PongGame.PADDLE_WIDTH &&
+      this.state.ball.y + PongGame.BALL_HEIGHT >= this.state.player.y &&
+      this.state.ball.y <= this.state.player.y + PongGame.PADDLE_HEIGHT
+    ) {
+      const ballCenter = this.state.ball.y + PongGame.BALL_HEIGHT / 2;
+      const paddleCenter = this.state.player.y + PongGame.PADDLE_HEIGHT / 2;
+
+      // normalizedImpact maps the hit position to [-1, 1]
+      // where -1 is the top edge and 1 is the bottom edge of the paddle
+      const normalizedImpact = (ballCenter - paddleCenter) / (PongGame.PADDLE_HEIGHT / 2);
+
+      this.state.ball.vx = -this.state.ball.vx;
+      this.state.ball.vy = normalizedImpact === 0 ? 1 : normalizedImpact * this.BALL_SPEED_Y;
+      this.state.ball.x = this.state.player.x + PongGame.PADDLE_WIDTH;
+    }
+  }
+
+  private checkAIPaddleCollision() {
+    if (
+      this.state.ball.x + PongGame.BALL_WIDTH >= this.state.ai.x &&
+      this.state.ball.x <= this.state.ai.x + PongGame.PADDLE_WIDTH &&
+      this.state.ball.y + PongGame.BALL_HEIGHT >= this.state.ai.y &&
+      this.state.ball.y <= this.state.ai.y + PongGame.PADDLE_HEIGHT
+    ) {
+      const ballCenter = this.state.ball.y + PongGame.BALL_HEIGHT / 2;
+      const paddleCenter = this.state.ai.y + PongGame.PADDLE_HEIGHT / 2;
+
+      // normalizedImpact maps the hit position to [-1, 1]
+      // where -1 is the top edge and 1 is the bottom edge of the paddle
+      const normalizedImpact = (ballCenter - paddleCenter) / (PongGame.PADDLE_HEIGHT / 2);
+
+      this.state.ball.vx = -this.state.ball.vx;
+      this.state.ball.vy = normalizedImpact === 0 ? 1 : normalizedImpact * this.BALL_SPEED_Y;
+    }
+  }
+
+  private updateAIPosition() {
+    const aiCenter = this.state.ai.y + PongGame.PADDLE_HEIGHT / 2;
+    const ballCenter = this.state.ball.y + PongGame.BALL_HEIGHT / 2;
+    const diff = Math.abs(ballCenter - aiCenter);
+
+    if (diff <= this.AI_SPEED) {
+      return;
+    }
+
+    const isBallHigherThanAIPaddle = ballCenter < aiCenter;
+    const newAIPosition = isBallHigherThanAIPaddle
+      ? this.state.ai.y - this.AI_SPEED
+      : this.state.ai.y + this.AI_SPEED;
+
+    if (this.canMoveVertically(newAIPosition)) {
+      this.state.ai.y = newAIPosition;
     }
   }
 
