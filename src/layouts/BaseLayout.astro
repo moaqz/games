@@ -110,3 +110,22 @@ interface Props {
         }
     }
 </style>
+
+<script>
+    const selectAudio = new Audio("/audio/switch_001.ogg");
+    const confirmAudio = new Audio("/audio/click_002.ogg");
+
+    document.querySelectorAll("select").forEach((select) => {
+        select.addEventListener("change", () => {
+            selectAudio.currentTime = 0;
+            selectAudio.play();
+        });
+    });
+
+    document.querySelectorAll("button").forEach((button) => {
+        button.addEventListener("click", () => {
+            confirmAudio.currentTime = 0;
+            confirmAudio.play();
+        });
+    });
+</script>

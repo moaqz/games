@@ -84,3 +84,48 @@ import { GAMES_LIST } from "~/games-list";
         }
     }
 </style>
+
+<script>
+    const hoverSound = new Audio("/audio/click_001.ogg");
+    const selectSound = new Audio("/audio/confirmation_001.ogg");
+
+    let audioUnlocked = false;
+
+    function unlockAudio() {
+        hoverSound.play().then(() => {
+            hoverSound.pause();
+            hoverSound.currentTime = 0;
+            audioUnlocked = true;
+        });
+
+        document.removeEventListener("click", unlockAudio);
+    }
+    document.addEventListener("click", unlockAudio);
+
+    document.querySelectorAll("a.game").forEach((game) => {
+        game.addEventListener("click", (event) => {
+            event.preventDefault();
+
+            const href = game.getAttribute("href");
+
+            selectSound.currentTime = 0;
+            selectSound.play();
+
+            selectSound.addEventListener(
+                "ended",
+                () => {
+                    // @ts-ignore
+                    window.location.href = href;
+                },
+                { once: true },
+            );
+        });
+
+        game.addEventListener("mouseenter", () => {
+            if (audioUnlocked) {
+                hoverSound.currentTime = 0;
+                hoverSound.play();
+            }
+        });
+    });
+</script>

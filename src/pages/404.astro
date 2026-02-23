@@ -5,7 +5,7 @@ import BaseLayout from "~/layouts/BaseLayout.astro";
 <BaseLayout title="Games | Page not found">
     <div class="page">
         <h1>Page Not Found</h1>
-        <a href="/" class="button"> Go to the menu </a>
+        <a href="/" class="button" id="back-button"> Go to the menu </a>
     </div>
 </BaseLayout>
 
@@ -19,3 +19,26 @@ import BaseLayout from "~/layouts/BaseLayout.astro";
         min-height: 100dvh;
     }
 </style>
+
+<script>
+    const homeButton = document.querySelector("#back-button")!;
+    const backSound = new Audio("/audio/back_001.ogg");
+
+    homeButton.addEventListener("click", (event) => {
+        event.preventDefault();
+
+        const href = homeButton.getAttribute("href");
+
+        backSound.currentTime = 0;
+        backSound.play();
+
+        backSound.addEventListener(
+            "ended",
+            () => {
+                // @ts-ignore
+                window.location.href = href;
+            },
+            { once: true },
+        );
+    });
+</script>
