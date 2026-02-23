@@ -1,5 +1,20 @@
 import { Game } from "../core/game";
 
+enum Control {
+  KEYBOARD = "keyboard",
+  MOUSE = "mouse",
+}
+
+enum Difficulty {
+  PRACTICE = "practice",
+  NORMAL = "normal",
+}
+
+export interface PongSettings {
+  controls: Control;
+  difficulty: Difficulty;
+}
+
 export class PongGame extends Game {
   private static SCREEN_WIDTH = 600;
   private static SCREEN_HEIGHT = 600;
@@ -27,6 +42,8 @@ export class PongGame extends Game {
 
   private AI_SPEED = 3;
 
+  private readonly settings;
+
   private state = {
     ai: {
       score: 0,
@@ -53,24 +70,31 @@ export class PongGame extends Game {
 
   private keys: Record<string, boolean> = {};
 
-  constructor(selector: string) {
+  constructor(selector: string, settings: PongSettings) {
     super(selector);
 
     this.canvas.width = PongGame.SCREEN_WIDTH;
     this.canvas.height = PongGame.SCREEN_HEIGHT;
+    this.settings = settings;
 
-    document.addEventListener("keydown", this.handleKeyDown);
-    document.addEventListener("keyup", this.handleKeyUp);
+    if (settings.controls === Control.KEYBOARD) {
+      document.addEventListener("keydown", this.handleKeyDown);
+      document.addEventListener("keyup", this.handleKeyUp);
+    }
   }
 
   protected processInput() {
-    this.state.player.movingUp = Boolean(this.keys["ArrowUp"]);
-    this.state.player.movingDown = Boolean(this.keys["ArrowDown"]);
+    if (this.settings.controls === Control.KEYBOARD) {
+      this.state.player.movingUp = Boolean(this.keys["ArrowUp"]);
+      this.state.player.movingDown = Boolean(this.keys["ArrowDown"]);
+    }
   }
 
   protected destroy() {
-    document.removeEventListener("keydown", this.handleKeyDown);
-    document.removeEventListener("keydown", this.handleKeyUp);
+    if (this.settings.controls === Control.KEYBOARD) {
+      document.removeEventListener("keydown", this.handleKeyDown);
+      document.removeEventListener("keyup", this.handleKeyUp);
+    }
   }
 
   protected update() {
@@ -261,6 +285,18 @@ export class PongGame extends Game {
   }
 
   private updateAIPosition() {
+    if (this.settings.difficulty === Difficulty.PRACTICE) {
+      this.state.ai.y = Math.max(
+        PongGame.SCREEN_BORDER,
+        Math.min(
+          this.state.ball.y,
+          PongGame.SCREEN_HEIGHT - PongGame.SCREEN_BORDER - PongGame.PADDLE_HEIGHT,
+        ),
+      );
+
+      return;
+    }
+
     const aiCenter = this.state.ai.y + PongGame.PADDLE_HEIGHT / 2;
     const ballCenter = this.state.ball.y + PongGame.BALL_HEIGHT / 2;
     const diff = Math.abs(ballCenter - aiCenter);
