@@ -1,0 +1,23 @@
+---
+import BaseLayout from "~/layouts/BaseLayout.astro";
+---
+
+<BaseLayout title="Pong">
+    <div class="page">
+        <h1>Pong</h1>
+        <canvas id="game"></canvas>
+    </div>
+</BaseLayout>
+
+<script>
+    import { PongGame } from "~/games/pong";
+
+    new PongGame("#game").start();
+</script>
+
+<style>
+    canvas,
+    h1 {
+        padding: 1rem;
+    }
+</style>
