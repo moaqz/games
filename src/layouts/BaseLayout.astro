@@ -90,4 +90,23 @@ interface Props {
             color: var(--tx2);
         }
     }
+
+    .button {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        height: 2.5rem;
+        background-color: var(--button-bg);
+        color: var(--tx);
+        border: 1px solid transparent;
+        cursor: inherit;
+        transition: opacity 0.2s ease;
+        padding-inline: 0.75rem;
+
+        &:hover,
+        &:disabled {
+            opacity: 0.5;
+        }
+    }
 </style>
