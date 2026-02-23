@@ -55,8 +55,12 @@ interface Props {
         --bg: #3e3546;
         --card-bg: #625565;
         --card-border: #3e3546;
+        --button-bg: #694f62;
+        --input-bg: #2e222f;
+        --input-border: #3e3546;
         --tx: #ffffff;
         --tx2: #a198a9;
+        --warning-tx: #f79617;
     }
 
     body {
@@ -64,7 +68,7 @@ interface Props {
         background-color: var(--bg);
         font-family: "Press Start 2P", system-ui;
         min-height: 100dvh;
-        overflow-x: hidden;
+        cursor: crosshair;
     }
 
     .links {
@@ -80,6 +84,7 @@ interface Props {
 
     a:not([class]) {
         transition: color 0.2s ease;
+        cursor: crosshair;
 
         &:hover {
             color: var(--tx2);

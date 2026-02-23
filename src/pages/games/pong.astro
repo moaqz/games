@@ -5,19 +5,137 @@ import BaseLayout from "~/layouts/BaseLayout.astro";
 <BaseLayout title="Pong">
     <div class="page">
         <h1>Pong</h1>
+
+        <form id="pong-options" class="form">
+            <div class="form-group">
+                <label for="binding">Controls</label>
+                <select id="controls" name="controls">
+                    <option value="keyboard">Keyboard</option>
+                    <option value="mouse" disabled>Mouse</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="difficulty">Difficulty</label>
+                <select id="difficulty" name="difficulty">
+                    <option value="normal">Normal</option>
+                    <option value="practice">Practice</option>
+                </select>
+            </div>
+
+            <button type="submit" class="button"> Start Game </button>
+        </form>
+
+        <p class="alert" id="requeriments-warning" hidden>
+            This game requires a keyboard or mouse. Please use a computer to
+            play.
+        </p>
+
         <canvas id="game"></canvas>
     </div>
 </BaseLayout>
 
-<script>
-    import { PongGame } from "~/games/pong";
-
-    new PongGame("#game").start();
-</script>
-
 <style>
-    canvas,
-    h1 {
+    .page {
         padding: 1rem;
+        display: flex;
+        flex-direction: column;
+        min-height: 100dvh;
+        align-items: center;
+        justify-content: center;
+        gap: 2rem;
+    }
+
+    .form {
+        display: flex;
+        flex-direction: column;
+        gap: 1.25rem;
+        max-width: 500px;
+        width: 100%;
+    }
+
+    .form-group {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+
+        & > label {
+            font-size: 0.875rem;
+            line-height: 1.5;
+        }
+
+        & > select {
+            outline: none;
+            height: 2.5rem;
+            padding-inline: 0.75rem;
+            background-color: var(--input-bg);
+            color: var(--tx2);
+            border: 1px solid var(--input-border);
+        }
+    }
+
+    .button {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        height: 2.5rem;
+        background-color: var(--button-bg);
+        color: var(--tx);
+        border: 1px solid transparent;
+        cursor: inherit;
+        transition: opacity 0.2s ease;
+
+        &:hover,
+        &:disabled {
+            opacity: 0.5;
+        }
+    }
+
+    .alert {
+        max-width: 40ch;
+        font-size: 0.75rem;
+        color: var(--warning-tx);
     }
 </style>
+
+<script>
+    const form = document.querySelector("#pong-options")!;
+    const requerimentsWarning = document.querySelector(
+        "#requeriments-warning",
+    )!;
+
+    const screenWidth = window.innerWidth;
+    const windowPadding = 16 * 2;
+    const MINIMUM_WINDOW_SIZE = 600;
+
+    if (screenWidth - windowPadding <= MINIMUM_WINDOW_SIZE) {
+        const submitBtn = form.querySelector("button[type='submit']");
+        submitBtn?.setAttribute("disabled", "");
+        requerimentsWarning.removeAttribute("hidden");
+    }
+
+    form.addEventListener("submit", async (event) => {
+        event.preventDefault();
+
+        const formData = new FormData(event.target as HTMLFormElement);
+        const module = await import("~/games/pong")
+            .then((m) => m.PongGame)
+            .catch(() => null);
+
+        if (!module) {
+            console.log("Fail to initialize pong game");
+            return;
+        }
+
+        form.remove();
+
+        const gameSettings = {
+            controls: formData.get("controls"),
+            difficulty: formData.get("difficulty"),
+        };
+
+        // @ts-ignore
+        new module("#game", gameSettings).start();
+    });
+</script>
