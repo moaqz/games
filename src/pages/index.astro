@@ -74,12 +74,13 @@ import { GAMES_LIST } from "~/games-list";
         }
 
         & > svg {
-            transition-property: translate;
-            transition-duration: 200ms;
-            transition-timing-function: ease-out;
+            transition-property: translate, color;
+            transition-duration: 0.2s;
+            transition-timing-function: ease;
         }
 
         &:hover > svg {
+            color: #91db69;
             translate: 10px;
         }
     }
