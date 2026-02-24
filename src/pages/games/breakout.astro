@@ -1,0 +1,22 @@
+---
+import GameLayout from "~/layouts/GameLayout.astro";
+---
+
+<GameLayout title="Breakout">
+    <p class="alert">This game is still work in progress!</p>
+</GameLayout>
+
+<script>
+    import { BreakoutGame } from "~/games/breakout";
+
+    new BreakoutGame("#game").start();
+</script>
+
+<style>
+    .alert {
+        max-width: 40ch;
+        font-size: 0.75rem;
+        color: var(--warning-tx);
+        text-align: center;
+    }
+</style>
