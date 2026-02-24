@@ -1,53 +1,34 @@
 ---
-import BaseLayout from "~/layouts/BaseLayout.astro";
+import GameLayout from "~/layouts/GameLayout.astro";
 ---
 
-<BaseLayout title="Pong">
-    <div class="page">
-        <h1>Pong</h1>
+<GameLayout title="Pong">
+    <form id="pong-options" class="form">
+        <div class="form-group">
+            <label for="binding">Controls</label>
+            <select id="controls" name="controls">
+                <option value="keyboard">Keyboard</option>
+                <option value="mouse" disabled>Mouse</option>
+            </select>
+        </div>
 
-        <form id="pong-options" class="form">
-            <div class="form-group">
-                <label for="binding">Controls</label>
-                <select id="controls" name="controls">
-                    <option value="keyboard">Keyboard</option>
-                    <option value="mouse" disabled>Mouse</option>
-                </select>
-            </div>
+        <div class="form-group">
+            <label for="difficulty">Difficulty</label>
+            <select id="difficulty" name="difficulty">
+                <option value="normal">Normal</option>
+                <option value="practice">Practice</option>
+            </select>
+        </div>
 
-            <div class="form-group">
-                <label for="difficulty">Difficulty</label>
-                <select id="difficulty" name="difficulty">
-                    <option value="normal">Normal</option>
-                    <option value="practice">Practice</option>
-                </select>
-            </div>
+        <button type="submit" class="button" id="play-btn"> Start Game </button>
+    </form>
 
-            <button type="submit" class="button" id="play-btn">
-                Start Game
-            </button>
-        </form>
-
-        <p class="alert" id="requeriments-warning" hidden>
-            This game requires a keyboard or mouse. Please use a computer to
-            play.
-        </p>
-
-        <canvas id="game"></canvas>
-    </div>
-</BaseLayout>
+    <p class="alert" id="requeriments-warning" hidden>
+        This game requires a keyboard or mouse. Please use a computer to play.
+    </p>
+</GameLayout>
 
 <style>
-    .page {
-        padding: 1rem;
-        display: flex;
-        flex-direction: column;
-        min-height: 100dvh;
-        align-items: center;
-        justify-content: center;
-        gap: 2rem;
-    }
-
     .form {
         display: flex;
         flex-direction: column;

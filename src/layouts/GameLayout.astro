@@ -1,0 +1,77 @@
+---
+import BaseLayout from "~/layouts/BaseLayout.astro";
+---
+
+<BaseLayout title={Astro.props.title}>
+    <div class="page">
+        <header>
+            <a href="/" id="menu-btn">
+                <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="20"
+                    height="20"
+                    viewBox="0 0 24 24"
+                    ><path
+                        fill="currentColor"
+                        d="m4.431 12.822l13 9A1 1 0 0 0 19 21V3a1 1 0 0 0-1.569-.823l-13 9a1.003 1.003 0 0 0 0 1.645"
+                    ></path>
+                </svg>
+                Menu
+            </a>
+        </header>
+
+        <main>
+            <h1>{Astro.props.title}</h1>
+            <slot />
+            <canvas id="game"></canvas>
+        </main>
+    </div>
+</BaseLayout>
+
+<style>
+    .page {
+        padding: 1rem;
+        display: grid;
+        grid-template-rows: auto 1fr;
+        gap: 2rem;
+        min-height: 100dvh;
+
+        & main {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 2rem;
+            min-width: 0;
+        }
+    }
+
+    a {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+</style>
+
+<script>
+    const backSound = new Audio("/audio/back_001.mp3");
+    const menuButton = document.querySelector("#menu-btn")!;
+
+    menuButton.addEventListener("click", (event) => {
+        event.preventDefault();
+
+        const href = menuButton.getAttribute("href");
+
+        backSound.currentTime = 0;
+        backSound.play();
+
+        backSound.addEventListener(
+            "ended",
+            () => {
+                // @ts-ignore
+                window.location.href = href;
+            },
+            { once: true },
+        );
+    });
+</script>
