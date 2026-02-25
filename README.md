@@ -15,7 +15,7 @@ A collection of retro games recreated using Canvas API.
 
 # Contributing
 
-Since this is a learning project, contributions are welcome!
+Contributions are welcome!
 
 - Found a bug? Open an issue.
 - Want to add a new feature? Feel free to fork and submit a PR.
