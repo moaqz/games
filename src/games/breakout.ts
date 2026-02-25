@@ -36,15 +36,27 @@ export class BreakoutGame extends Game {
   private readonly BLOCK_OFFSET = 5;
   private readonly BLOCK_GAP = 4;
 
-  private readonly PADDLE_VELOCITY = 10;
+  private readonly PADDLE_SPEED = 8;
+  private readonly BALL_SPEED = 4.75;
+  private readonly PLAYER_LIVES = 3;
 
   private state = {
+    ball: {
+      position: this.BALL_INITIAL_POSITION,
+      velocity: {
+        x: 0,
+        y: 0,
+      },
+    },
     blocks: this.generateBlocks(),
     player: {
       isMovingLeft: false,
       isMovingRight: false,
+      lives: this.PLAYER_LIVES,
+      points: 0,
       position: this.PADDLE_INITIAL_POSITION,
     },
+    waitingLaunch: true,
   };
 
   private keys: Record<string, boolean> = {};
@@ -65,18 +77,42 @@ export class BreakoutGame extends Game {
   }
 
   protected update() {
+    if (!this.hasLives) {
+      return;
+    }
+
+    const isPlayerMoving = this.state.player.isMovingLeft || this.state.player.isMovingRight;
+
+    if (this.state.waitingLaunch) {
+      if (!isPlayerMoving) {
+        return;
+      }
+
+      const launchAngle = this.BALL_LAUNCH_ANGLE;
+      this.state.ball.velocity.x = this.BALL_SPEED * Math.cos(launchAngle);
+      this.state.ball.velocity.y = this.BALL_SPEED * -Math.sin(launchAngle);
+      this.state.waitingLaunch = false;
+    }
+
     let newPosition = this.state.player.position.x;
 
     if (this.state.player.isMovingLeft) {
-      newPosition -= this.PADDLE_VELOCITY;
+      newPosition -= this.PADDLE_SPEED;
     } else if (this.state.player.isMovingRight) {
-      newPosition += this.PADDLE_VELOCITY;
+      newPosition += this.PADDLE_SPEED;
     }
 
     this.state.player.position.x = Math.max(
       this.SCREEN_BORDER_SIZE,
       Math.min(newPosition, this.SCREEN_WIDTH - this.SCREEN_BORDER_SIZE - this.PADDLE_WIDTH),
     );
+
+    this.state.ball.position.x += this.state.ball.velocity.x;
+    this.state.ball.position.y += this.state.ball.velocity.y;
+
+    this.checkBallCollisionWithBorders();
+    this.checkBallCollisionWithPaddle();
+    this.checkBallCollisionWithBlocks();
   }
 
   protected render() {
@@ -110,6 +146,11 @@ export class BreakoutGame extends Game {
 
   private get BALL_SIZE() {
     return this.SCREEN_WIDTH * 0.02;
+  }
+
+  private get BALL_LAUNCH_ANGLE() {
+    // Angle between 45° and 135°
+    return (Math.random() * Math.PI) / 2 + Math.PI / 4;
   }
 
   private drawBackground() {
@@ -155,6 +196,21 @@ export class BreakoutGame extends Game {
     };
   }
 
+  private get BALL_INITIAL_POSITION() {
+    return {
+      x: this.SCREEN_WIDTH / 2 - this.BALL_SIZE / 2,
+      y:
+        this.SCREEN_HEIGHT -
+        this.SCREEN_BORDER_SIZE * 4 -
+        this.PADDLE_HEIGHT -
+        this.BALL_SIZE * 1.2,
+    };
+  }
+
+  private get hasLives() {
+    return this.state.player.lives > 0;
+  }
+
   private drawPaddle() {
     this.ctx.fillStyle = PADDLE_COLOR;
     const { x, y } = this.state.player.position;
@@ -164,8 +220,8 @@ export class BreakoutGame extends Game {
   private drawBall() {
     this.ctx.fillStyle = BALL_COLOR;
     this.ctx.fillRect(
-      this.SCREEN_WIDTH / 2 - this.BALL_SIZE / 2,
-      this.SCREEN_HEIGHT - this.SCREEN_BORDER_SIZE * 4 - this.PADDLE_HEIGHT - this.BALL_SIZE * 1.2,
+      this.state.ball.position.x,
+      this.state.ball.position.y,
       this.BALL_SIZE,
       this.BALL_SIZE,
     );
@@ -205,4 +261,96 @@ export class BreakoutGame extends Game {
   private handleKeyDown = (event: KeyboardEvent) => {
     this.keys[event.key] = true;
   };
+
+  private checkBallCollisionWithBorders() {
+    const isTouchingLeftBorder = this.state.ball.position.x <= this.SCREEN_BORDER_SIZE;
+    const isTouchingRightBorder =
+      this.state.ball.position.x + this.BALL_SIZE >= this.SCREEN_WIDTH - this.SCREEN_BORDER_SIZE;
+
+    if (isTouchingLeftBorder) {
+      this.state.ball.position.x = this.SCREEN_BORDER_SIZE;
+      this.state.ball.velocity.x = -this.state.ball.velocity.x;
+      return;
+    }
+
+    if (isTouchingRightBorder) {
+      this.state.ball.position.x = this.SCREEN_WIDTH - this.SCREEN_BORDER_SIZE - this.BALL_SIZE;
+      this.state.ball.velocity.x = -this.state.ball.velocity.x;
+      return;
+    }
+
+    const isTouchingTopBorder = this.state.ball.position.y <= this.SCREEN_BORDER_SIZE;
+    if (isTouchingTopBorder) {
+      this.state.ball.position.y = this.SCREEN_BORDER_SIZE;
+      this.state.ball.velocity.y = -this.state.ball.velocity.y;
+      return;
+    }
+
+    const isTouchingBottomBorder =
+      this.state.ball.position.y + this.BALL_SIZE >= this.SCREEN_HEIGHT - this.SCREEN_BORDER_SIZE;
+    if (isTouchingBottomBorder) {
+      this.state.player.lives--;
+      this.resetRound();
+    }
+  }
+
+  private checkBallCollisionWithPaddle() {
+    if (
+      this.state.ball.position.x + this.BALL_SIZE >= this.state.player.position.x &&
+      this.state.ball.position.x <= this.state.player.position.x + this.PADDLE_WIDTH &&
+      this.state.ball.position.y + this.BALL_SIZE >= this.state.player.position.y &&
+      this.state.ball.position.y <= this.state.player.position.y + this.PADDLE_HEIGHT
+    ) {
+      const ballCenter = this.state.ball.position.x + this.BALL_SIZE / 2;
+      const paddleCenter = this.state.player.position.x + this.PADDLE_WIDTH / 2;
+
+      const normalizedImpact = (ballCenter - paddleCenter) / (this.PADDLE_WIDTH / 2);
+
+      this.state.ball.velocity.x = normalizedImpact * this.BALL_SPEED;
+      this.state.ball.velocity.y = -Math.abs(this.state.ball.velocity.y);
+      this.state.ball.position.y = this.state.player.position.y - this.BALL_SIZE;
+    }
+  }
+
+  private checkBallCollisionWithBlocks() {
+    for (const block of this.state.blocks) {
+      if (!block.visible) {
+        continue;
+      }
+
+      if (
+        this.state.ball.position.x + this.BALL_SIZE >= block.position.x &&
+        this.state.ball.position.x <= block.position.x + block.size.width &&
+        this.state.ball.position.y + this.BALL_SIZE >= block.position.y &&
+        this.state.ball.position.y <= block.position.y + block.size.height
+      ) {
+        const overlapLeft = this.state.ball.position.x + this.BALL_SIZE - block.position.x;
+        const overlapRight = block.position.x + block.size.width - this.state.ball.position.x;
+        const overlapTop = this.state.ball.position.y + this.BALL_SIZE - block.position.y;
+        const overlapBottom = block.position.y + block.size.height - this.state.ball.position.y;
+
+        const minOverlapX = Math.min(overlapLeft, overlapRight);
+        const minOverlapY = Math.min(overlapTop, overlapBottom);
+
+        if (minOverlapX < minOverlapY) {
+          this.state.ball.velocity.x = -this.state.ball.velocity.x;
+        } else {
+          this.state.ball.velocity.y = -this.state.ball.velocity.y;
+        }
+
+        block.visible = false;
+        this.state.player.points += block.points;
+        this.state.ball.velocity.x *= 1.01;
+        this.state.ball.velocity.y *= 1.01;
+        break;
+      }
+    }
+  }
+
+  private resetRound() {
+    this.state.ball.position = this.BALL_INITIAL_POSITION;
+    this.state.player.position = this.PADDLE_INITIAL_POSITION;
+    this.state.ball.velocity = { x: 0, y: 0 };
+    this.state.waitingLaunch = true;
+  }
 }
